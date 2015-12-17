@@ -8,15 +8,15 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='django-reports',
+    name='django-wrapreportlab',
     version='0.1',
-    packages=['reports'],
+    packages=['wrapreportlab'],
     include_package_data=True,
     install_requires=[
         "reportlab",
     ],
     license='BSD License',
-    description='Django-reports',
+    description='Django-wrapreportlab',
     long_description=README,
     url='',
     author='Pedro Grisales',
