@@ -117,12 +117,13 @@ class DocumentReport(PdfReport):
     """
     docstring for DocumentReport
     """
-    def __init__(self, pagesize=letter):
+    def __init__(self, pagesize=letter, blank=False):
         super(DocumentReport, self).__init__(pagesize)
         self.doc = self.get_template()
         self.styles = getSampleStyleSheet()
         self.elements = []
         self.title = ''
+        self.blank = blank
 
     def get_title(self):
         return self.title
@@ -138,7 +139,7 @@ class DocumentReport(PdfReport):
             pagesize = self.pagesize
         )
 
-    def get_header_and_footer(self, canvas, doc):
+    def get_header_and_footer(self, canvas, doc):        
         canvas.saveState()
         subheader = Paragraph('SGV', self.styles['Heading2'])
         w, offsetY = subheader.wrap(self.doc.width, self.doc.topMargin)
@@ -160,12 +161,17 @@ class DocumentReport(PdfReport):
 
     def build(self):
         self.write()
-        self.doc.build(
-            self.elements,
-            onFirstPage = self.get_header_and_footer,
-            canvasmaker = NumberedCanvas,
-            onLaterPages = self.get_header_and_footer,
-        )
+        if blank:
+            self.doc.build(
+                self.elements,    
+            )
+        else:
+            self.doc.build(
+                self.elements,
+                onFirstPage = self.get_header_and_footer,
+                canvasmaker = NumberedCanvas,
+                onLaterPages = self.get_header_and_footer,
+            )
         pdf = self.buffer.getvalue()
         self.buffer.close()
         return pdf
