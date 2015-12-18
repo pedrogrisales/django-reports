@@ -138,7 +138,7 @@ class DocumentReport(PdfReport):
             bottomMargin = margins['bottom'] * cm,
             pagesize = self.pagesize
         )
-        
+
     def get_header_and_footer(self, canvas, doc):        
         canvas.saveState()
         subheader = Paragraph('SGV', self.styles['Heading2'])
@@ -160,7 +160,7 @@ class DocumentReport(PdfReport):
 
     def build(self):
         self.write()
-        if blank:
+        if self.blank:
             self.doc.build(
                 self.elements,    
             )
