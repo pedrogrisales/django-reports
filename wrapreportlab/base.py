@@ -117,12 +117,13 @@ class DocumentReport(PdfReport):
     """
     docstring for DocumentReport
     """
-    def __init__(self, pagesize=letter):
+    def __init__(self, pagesize=letter, blank=False):
         super(DocumentReport, self).__init__(pagesize)
         self.doc = self.get_template()
         self.styles = getSampleStyleSheet()
         self.elements = []
         self.title = ''
+        self.blank = blank
 
     def get_title(self):
         return self.title
@@ -139,23 +140,24 @@ class DocumentReport(PdfReport):
         )
 
     def get_header_and_footer(self, canvas, doc):
-        canvas.saveState()
-        subheader = Paragraph('SGV', self.styles['Heading2'])
-        w, offsetY = subheader.wrap(self.doc.width, self.doc.topMargin)
-        subheader.drawOn(
-            canvas,
-            self.doc.leftMargin,
-            (self.height - self.doc.topMargin) + 10 # padding bottom = 10
-        )
-        header = Paragraph(self.get_title(), self.styles['Heading1'])
-        w, offsetY = header.wrap(self.doc.width, self.doc.topMargin)
-        header.wrap(self.doc.width, self.doc.topMargin)
-        header.drawOn(
-            canvas,
-            self.doc.leftMargin,
-            (self.height - self.doc.topMargin) + offsetY + 10
-        )
-        canvas.restoreState()
+        if not self.blank:
+            canvas.saveState()
+            subheader = Paragraph('SGV', self.styles['Heading2'])
+            w, offsetY = subheader.wrap(self.doc.width, self.doc.topMargin)
+            subheader.drawOn(
+                canvas,
+                self.doc.leftMargin,
+                (self.height - self.doc.topMargin) + 10 # padding bottom = 10
+            )
+            header = Paragraph(self.get_title(), self.styles['Heading1'])
+            w, offsetY = header.wrap(self.doc.width, self.doc.topMargin)
+            header.wrap(self.doc.width, self.doc.topMargin)
+            header.drawOn(
+                canvas,
+                self.doc.leftMargin,
+                (self.height - self.doc.topMargin) + offsetY + 10
+            )
+            canvas.restoreState()
 
 
     def build(self):
