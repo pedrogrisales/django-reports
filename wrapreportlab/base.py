@@ -39,12 +39,12 @@ class NumberedCanvas(canvas.Canvas):
         for state in self._saved_page_states:
             self.__dict__.update(state)
             self.draw_page_number(num_pages)
-            canvas.Canvas.showPage(self)            
+            canvas.Canvas.showPage(self)
         canvas.Canvas.save(self)
 
     def draw_page_number(self, page_count):
-        self.drawRightString(
-            settings.MARGINS_REPORT['right'] * cm + 100,
+        self.drawString(
+            settings.MARGINS_REPORT['right'] * cm ,
             settings.MARGINS_REPORT['bottom'] * cm,
             "Página %d de %d" % (self._pageNumber, page_count)
         )
@@ -82,7 +82,7 @@ class TextReport(BaseReport):
         self.content_type = 'text/csv'
         self.writer = csv.writer(self.buffer, delimiter=";")
 
-    def build(self):        
+    def build(self):
         self.write()
         self.buffer.write(u'\ufeff'.encode('utf8'))
         ofile = self.buffer.getvalue()
@@ -92,15 +92,15 @@ class TextReport(BaseReport):
 
 class PdfReport(BaseReport):
 
-    def __init__(self, pagesize=letter):       
-        super(PdfReport, self).__init__()     
+    def __init__(self, pagesize=letter):
+        super(PdfReport, self).__init__()
         self.pagesize = pagesize
-        self.width, self.height = pagesize        
+        self.width, self.height = pagesize
         self.content_type = 'application/pdf'
 
 
 class CanvasReport(PdfReport):
-    
+
     def __init__(self, pagesize):
         super(CanvasReport, self).__init__(pagesize)
         self.page = canvas.Canvas(self.buffer)
@@ -123,10 +123,18 @@ class DocumentReport(PdfReport):
         self.styles = getSampleStyleSheet()
         self.elements = []
         self.title = ''
+        self.subtitle = ''
+        self.firm = ''
         self.blank = blank
 
     def get_title(self):
         return self.title
+
+    def get_subtitle(self):
+        return self.subtitle
+
+    def get_firm(arg):
+        return self.firm
 
     def get_template(self):
         margins = settings.MARGINS_REPORT
@@ -139,37 +147,47 @@ class DocumentReport(PdfReport):
             pagesize = self.pagesize
         )
 
-    def get_header_and_footer(self, canvas, doc):        
+    def get_footer_pages(self, canvas, doc):
         canvas.saveState()
-        subheader = Paragraph('SGV', self.styles['Heading2'])
-        w, offsetY = subheader.wrap(self.doc.width, self.doc.topMargin)
-        subheader.drawOn(
-            canvas,
-            self.doc.leftMargin,
-            (self.height - self.doc.topMargin) + 10 # padding bottom = 10
-        )
-        header = Paragraph(self.get_title(), self.styles['Heading1'])
-        w, offsetY = header.wrap(self.doc.width, self.doc.topMargin)
-        header.wrap(self.doc.width, self.doc.topMargin)
-        header.drawOn(
-            canvas,
-            self.doc.leftMargin,
-            (self.height - self.doc.topMargin) + offsetY + 10
-        )
+        style = self.styles['Normal']
+        style.alignment = TA_RIGHT
+        title = Paragraph(self.get_firm(), style)
+        w, offsetY = title.wrap(self.doc.width, self.doc.topMargin)        
+        title.drawOn(canvas, self.doc.leftMargin , self.doc.bottomMargin)
         canvas.restoreState()
+
+    def get_header_first_page(self, canvas, doc):
+        canvas.saveState()
+        title = Paragraph(self.get_title(), self.styles['Heading1'])
+        w, offsetY = title.wrap(self.doc.width, self.doc.topMargin)
+        title.drawOn(canvas, self.doc.leftMargin, (self.height - self.doc.topMargin))
+        subtitle = Paragraph(self.get_subtitle(), self.styles['Heading2'])
+        w, offsetY = subtitle.wrap(self.doc.width, self.doc.topMargin)
+        subtitle.drawOn(canvas, self.doc.leftMargin,
+                                (self.height - self.doc.topMargin) - offsetY)
+        canvas.restoreState()
+        self.get_footer_pages(canvas, doc)
+
+    def get_header_lates_pages(self, canvas, doc):
+        canvas.saveState()
+        title = Paragraph("<b>%s - %s</b>" % (self.get_title(), self.get_subtitle()), self.styles['BodyText'])
+        w, offsetY = title.wrap(self.doc.width, self.doc.topMargin)
+        title.drawOn(canvas, self.doc.leftMargin, (self.height - self.doc.topMargin))
+        canvas.restoreState()
+        self.get_footer_pages(canvas, doc)
 
     def build(self):
         self.write()
         if self.blank:
             self.doc.build(
-                self.elements,    
+                self.elements,
             )
         else:
             self.doc.build(
                 self.elements,
-                onFirstPage = self.get_header_and_footer,
+                onFirstPage = self.get_header_first_page,
                 canvasmaker = NumberedCanvas,
-                onLaterPages = self.get_header_and_footer,
+                onLaterPages = self.get_header_lates_pages,
             )
         pdf = self.buffer.getvalue()
         self.buffer.close()
